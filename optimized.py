@@ -15,18 +15,41 @@ class Portfolio:
     def __repr__(self):
         return self.df.__repr__()
 
-    def buy(self, share, next_profit, index):
+    def buy(self, df, index):
+        share = df.loc[index]
         share_df = pd.DataFrame([share], columns=["name", "price", "profit", "income"])
         self.df = pd.concat([self.df, share_df], axis=0, ignore_index=True)
         self.cash -= share["price"]
         self.total_income += share["income"]
-        self.max_income = self.total_income + next_profit * self.cash / 100
         self.max_id = index
+        self.max_income = self.estimate_max_income(df)
 
     def check_share(self, share):
         if share.price <= self.cash:
             return True
         return False
+
+    def estimate_max_income(self, df):
+        start_id = self.max_id + 1
+        start = True
+        max_income = self.total_income
+        cash = self.cash
+        for i in range(start_id, len(df)):
+            share = df.loc[i]
+            if start:
+                if share.price <= cash:
+                    start = False
+                else:
+                    continue
+            if share.price <= cash:
+                max_income += share["income"]
+                cash -= share["price"]
+            else:
+                max_income += share["profit"] * cash / 100
+                break
+        return max_income
+            
+
 
 """
     def sell(self, share):
@@ -52,13 +75,13 @@ def find_next_profit(index, df):
 def build_first_best(df):
     """Bluntly builds a test portofofio by purchasing shares with best profit rate it can buy
     one after the other in a single itération.
-    Used to quicly eliminate portofolios whit a maximum ideal estimated profit lesser than the current best candidate
+    Used to quicly eliminate portofolios with a maximum ideal estimated profit lesser than the current best candidate
     real profit"""
     first_best = Portfolio()
     for i in range(len(df)):
         share = df.loc[i]
         if first_best.check_share(share):
-            first_best.buy(share, find_next_profit(i, df), i)
+            first_best.buy(df, i)
     return first_best
 
 
@@ -68,8 +91,7 @@ def create_first_candidates(best_portfolio, df):
         share = df.loc[i]
         new = Portfolio()
         if new.check_share(share):
-            next_profit = find_next_profit(i, df)
-            new.buy(share, next_profit, i)
+            new.buy(df, i)
             if new.max_income > best_portfolio.total_income:
                 first_list.append(new)
             else:
@@ -82,10 +104,9 @@ def build_portfolios(portfolio, best_portfolio, df):
     start_id = portfolio.max_id + 1
     for i in range(start_id, len(df)):
         new_portfolio = deepcopy(portfolio)
-        next_profit = find_next_profit(i, df)
         share = df.loc[i]
         if new_portfolio.check_share(share):
-            new_portfolio.buy(share, next_profit, i)
+            new_portfolio.buy(df, i)
             if new_portfolio.max_income > best_portfolio.total_income:
                 new_list.append(new_portfolio)
                 if new_portfolio.total_income > best_portfolio.total_income:
