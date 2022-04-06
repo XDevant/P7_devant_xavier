@@ -29,11 +29,3 @@ class Portfolio:
         self.shares.append(share)
         self.cost += share.price
         self.total_income += share.income
-
-    def sell(self, share):
-        try:
-            self.shares.remove(share)
-            self.cost -= share.price
-            self.total_income -= share.income
-        except ValueError:
-            pass

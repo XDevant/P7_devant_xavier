@@ -2,6 +2,7 @@ from stocks import load_stocks
 from models import Portfolio
 from copy import deepcopy
 
+
 stock_list = load_stocks(0)
 total = len(stock_list)
 best_portfolio = Portfolio([])
