@@ -130,7 +130,6 @@ def main(argv):
         share = stock_df.loc[i]
         print(f"{share['name']}    {share.price}  {share.profit}  {share.income}")
     print(f"Total income: {best_portfolio.total_income}")
-    print(f"Max income: {best_portfolio.max_income}")
     print(f"Cash: {best_portfolio.cash}")
 
 

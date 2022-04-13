@@ -112,7 +112,6 @@ def fill_portfolios(list, best_portfolio, stock_df):
             share = stock_df.loc[i]
             print(f"{share['name']}    {share.price}  {share.profit}  {share.income}")
         print(f"Total income: {best_portfolio.total_income}")
-        print(f"Max income: {best_portfolio.max_income}")
         print(f"Cash: {best_portfolio.cash}")
     else:
         fill_portfolios(next_list, best_portfolio, stock_df)
