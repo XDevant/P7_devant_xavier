@@ -114,7 +114,7 @@ def chrono(func):
         start = time.time()
         func(*args, **kwargs)
         end = time.time()
-        print(f"Time: {end - start}")
+        print(f"Time: {round(end - start, 2)}")
     return wrapper
 
 
@@ -128,9 +128,9 @@ def main(argv):
     best_portfolio = check_candidates(first_best, breaks, stock_df)
     for i in best_portfolio.shares:
         share = stock_df.loc[i]
-        print(f"{share['name']}    {share.price}  {share.profit}  {share.income}")
-    print(f"Total income: {best_portfolio.total_income}")
-    print(f"Cash: {best_portfolio.cash}")
+        print(f"{share['name']}    {share.price}  {share.profit}  {round(share.income, 2)}")
+    print(f"Total income: {round(best_portfolio.total_income, 2)}")
+    print(f"Total Cost: {500 - round(best_portfolio.cash, 2)}")
 
 
 if __name__ == "__main__":

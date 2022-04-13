@@ -99,9 +99,9 @@ def fill_portfolios(list, best_portfolio, stock_df):
     if next_list == []:
         for i in best_portfolio.shares:
             share = stock_df.loc[i]
-            print(f"{share['name']}    {share.price}  {share.profit}  {share.income}")
-        print(f"Total income: {best_portfolio.total_income}")
-        print(f"Cash: {best_portfolio.cash}")
+            print(f"{share['name']}    {share.price}  {share.profit}  {round(share.income, 2)}")
+        print(f"Total income: {round(best_portfolio.total_income, 2)}")
+        print(f"Total Cost: {round(500 - best_portfolio.cash, 2)}")
     else:
         fill_portfolios(next_list, best_portfolio, stock_df)
 

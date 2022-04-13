@@ -11,7 +11,7 @@ class Share:
         self.income = round(self.price * self.profit / 100, 3)
 
     def __repr__(self):
-        return f"{self.name}: {self.price}$, {self.profit}%, income {self.income}$"
+        return f"{self.name}: {self.price}$, {self.profit}%, income {round(self.income, 2)}$"
 
 
 class Portfolio:
@@ -27,7 +27,7 @@ class Portfolio:
         itself = ""
         for share in self.shares:
             itself += share.__repr__() + "\n"
-        return itself + f"Total:{self.cost}, Income:{self.total_income}"
+        return itself + f"Cost:{self.cost}, Income:{round(self.total_income, 2)}"
 
     def buy(self, share):
         self.shares.append(share)
