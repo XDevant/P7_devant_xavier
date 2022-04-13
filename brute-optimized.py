@@ -58,20 +58,12 @@ def build_first_best(df):
     return first_best
 
 
-def quality_check(list, candidate):
-    for portfolio in list:
-        check = candidate.total_income <= portfolio.total_income and candidate.cash <= portfolio.cash
-        if check:
-            return False
-    return True
-
-
 def create_first_candidates(best_portfolio, df):
     first_list = []
     for i in range(len(df)):
         new = Portfolio()
         new.buy(df, i)
-        if new.success and new.max_income > best_portfolio.total_income and quality_check(first_list,new):
+        if new.success and new.max_income > best_portfolio.total_income:
             first_list.append(new)
             if new.total_income > best_portfolio.total_income:
                 best_portfolio = deepcopy(new)
@@ -87,7 +79,7 @@ def build_portfolios(portfolio, best_portfolio, df):
     for i in range(start_id, len(df)):
         new_portfolio = deepcopy(portfolio)
         new_portfolio.buy(df, i)
-        if new_portfolio.success and new_portfolio.max_income > best_portfolio.total_income and quality_check(new_list,new_portfolio):
+        if new_portfolio.success and new_portfolio.max_income >= best_portfolio.total_income:
             new_list.append(new_portfolio)
             if new_portfolio.total_income > best_portfolio.total_income:
                 best_portfolio = deepcopy(new_portfolio)
@@ -102,11 +94,8 @@ def fill_portfolios(list, best_portfolio, stock_df):
     for portfolio in list:
         new_list, best_portfolio = build_portfolios(portfolio, best_portfolio, stock_df)
         if new_list != []:
-            temp_list = []
             for portfolio in new_list:
-                if quality_check(next_list,portfolio):
-                    temp_list.append(portfolio)
-            next_list += temp_list
+                next_list.append(portfolio)
     if next_list == []:
         for i in best_portfolio.shares:
             share = stock_df.loc[i]

@@ -3,3 +3,4 @@
 /env
 __pycache__/
 optimized_beta.py
+stocks.pymodels.py

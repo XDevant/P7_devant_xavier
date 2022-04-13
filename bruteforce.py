@@ -1,20 +1,44 @@
-from stocks import load_stocks
-from models import Portfolio
 from copy import deepcopy
+import pandas as pd
 
 
-stock_list = load_stocks(0)
-total = len(stock_list)
-best_portfolio = Portfolio([])
-brute_list = []
+class Share:
+    def __init__(self, id, df):
+        self.id = id
+        self.name = df["name"][id]
+        self.price = df["price"][id]
+        self.profit = df["profit"][id]
+        self.income = round(self.price * self.profit / 100, 3)
 
-for stock in stock_list:
-    new = Portfolio([])
-    new.buy(stock)
-    if new.cost <= 500:
-        brute_list.append(new)
-        if new.total_income > best_portfolio.total_income:
-            best_portfolio = deepcopy(new)
+    def __repr__(self):
+        return f"{self.name}: {self.price}$, {self.profit}%, income {self.income}$"
+
+
+class Portfolio:
+    def __init__(self, shares):
+        self.shares = shares
+        self.cost = 0
+        self.total_income = 0
+        for share in shares:
+            self.cost += share.price
+            self.total_income += share.income
+
+    def __repr__(self):
+        itself = ""
+        for share in self.shares:
+            itself += share.__repr__() + "\n"
+        return itself + f"Total:{self.cost}, Income:{self.total_income}"
+
+    def buy(self, share):
+        self.shares.append(share)
+        self.cost += share.price
+        self.total_income += share.income
+
+
+def load_stocks(index):
+    df = pd.read_csv(f"./dataset{index}_Python+P7.csv", delimiter=",")
+    stocks = [Share(i, df) for i in range(len(df))]
+    return stocks
 
 
 def build_portfolio(portfolio, best_portfolio):
@@ -41,5 +65,18 @@ def fill_portfolios(list, best_portfolio):
     else:
         fill_portfolios(next_list, best_portfolio)
 
+
+stock_list = load_stocks(0)
+total = len(stock_list)
+best_portfolio = Portfolio([])
+brute_list = []
+
+for stock in stock_list:
+    new = Portfolio([])
+    new.buy(stock)
+    if new.cost <= 500:
+        brute_list.append(new)
+        if new.total_income > best_portfolio.total_income:
+            best_portfolio = deepcopy(new)
 fill_portfolios(brute_list, best_portfolio)
 
