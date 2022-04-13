@@ -10,26 +10,42 @@ class Portfolio:
         self.total_income = 0
         self.max_income = 0
         self.max_id = -1
-        self.df = pd.DataFrame([], columns=["name", "price", "profit", "income"])
+        self.shares = []
+        self.success = True
+
 
     def __repr__(self):
-        return self.df.__repr__()
+        return self.shares.__repr__()
 
     def buy(self, df, index):
         share = df.loc[index]
-        share_df = pd.DataFrame([share], columns=["name", "price", "profit", "income"])
-        self.df = pd.concat([self.df, share_df], axis=0, ignore_index=True)
-        self.cash -= share["price"]
-        self.total_income += share["income"]
-        self.max_id = index
-        self.max_income = self.estimate_max_income(df)
-
-    def check_share(self, share):
         if share.price <= self.cash:
+            self.shares.append(index)
+            self.cash -= share["price"]
+            self.total_income += share["income"]
+            self.max_income = self.estimate_max_income(df)
+            self.success = True
+        else:
+            self.success = False
+        self.max_id = index
+
+    
+    def sell_last(self, df):
+        """Sells last bought share if exists but keeps it's index in max_id
+        thus enabling backtracking"""
+        if len(self.shares) > 0:
+            share = df.loc[self.shares[-1]]
+            self.shares = self.shares[:-1]
+            self.cash += share["price"]
+            self.total_income -= share["income"]
+            self.max_income = self.estimate_max_income(df)
             return True
         return False
 
+
     def estimate_max_income(self, df):
+        """Virtualy fills portfofio with remaining shares, including partial buing of the first too expensive one
+        Used to compare with real income of the current best portfolio"""
         start_id = self.max_id + 1
         start = True
         max_income = self.total_income
@@ -48,88 +64,43 @@ class Portfolio:
                 max_income += share["profit"] * cash / 100
                 break
         return max_income
-            
-
-
-"""
-    def sell(self, share):
-        try:
-            self.shares.remove(share)
-            self.cost -= share.price
-            self.total_income -= share.income
-        except ValueError:
-            pass
-"""
-
-
-def find_next_profit(index, df):
-    """Used to return the profit of the share whose index is 1 more than the biggest index in portfolio
-    and maximize the possible profit of a portofolio since df is sorted by desc. profit.
-    """
-    if index >= len(df) - 1:
-        return 0
-    else:
-        return df["profit"][index + 1]
 
 
 def build_first_best(df):
     """Bluntly builds a test portofofio by purchasing shares with best profit rate it can buy
     one after the other in a single itération.
     Used to quicly eliminate portofolios with a maximum ideal estimated profit lesser than the current best candidate
-    real profit"""
+    real profit
+    Also returns a list of partial portofolios every times we encounter a share too expensive to buy"""
     first_best = Portfolio()
+    breaks = []
+    breaking = False
     for i in range(len(df)):
-        share = df.loc[i]
-        if first_best.check_share(share):
-            first_best.buy(df, i)
-    return first_best
+        first_best.buy(df, i)
+        if  first_best.success:
+            breaking = False
+        else:
+            if not breaking:
+                breaks.append(deepcopy(first_best))
+            breaking = True
+    return first_best, breaks
 
 
-def create_first_candidates(best_portfolio, df):
-    first_list = []
-    for i in range(len(df)):
-        share = df.loc[i]
-        new = Portfolio()
-        if new.check_share(share):
-            new.buy(df, i)
-            if new.max_income > best_portfolio.total_income:
-                first_list.append(new)
-            else:
+def check_candidates(best_portfolio, breaks, df):
+    for portfolio in breaks:
+        portfolio.sell_last(df)
+        start_id = portfolio.max_id + 1
+        for i in range(start_id, len(df)):
+            portfolio.buy(df, i)
+            if portfolio.max_income <= best_portfolio.total_income:
                 break
-    return first_list
-
-
-def build_portfolios(portfolio, best_portfolio, df):
-    new_list = []
-    start_id = portfolio.max_id + 1
-    for i in range(start_id, len(df)):
-        new_portfolio = deepcopy(portfolio)
-        share = df.loc[i]
-        if new_portfolio.check_share(share):
-            new_portfolio.buy(df, i)
-            if new_portfolio.max_income > best_portfolio.total_income:
-                new_list.append(new_portfolio)
-                if new_portfolio.total_income > best_portfolio.total_income:
-                    best_portfolio = deepcopy(new_portfolio)
-            else:
-                break
-    return new_list, best_portfolio
-
-
-def fill_portfolios(list, best_portfolio, stock_df):
-    next_list = []
-    for portfolio in list:
-        new_list, best_portfolio = build_portfolios(portfolio, best_portfolio, stock_df)
-        if new_list != []:
-            next_list += new_list
-    if next_list == []:
-        print(best_portfolio)
-        print(f"Total income: {best_portfolio.total_income}")
-    else:
-        fill_portfolios(next_list, best_portfolio, stock_df)
+        if portfolio.total_income > best_portfolio.total_income:
+            best_portfolio = deepcopy(portfolio)
+    return best_portfolio
 
 
 def load_stocks(filemane):
+    """loads the df and drops corrupt rows"""
     df = pd.read_csv(f"./{filemane}", delimiter=",")
     df = df[df["price"] > 0]
     df.drop_duplicates(inplace=True)
@@ -138,6 +109,7 @@ def load_stocks(filemane):
 
 
 def chrono(func):
+    """Creates a wrapper to show calculation time"""
     def wrapper(*args, **kwargs):
         start = time.time()
         func(*args, **kwargs)
@@ -152,9 +124,14 @@ def main(argv):
     stock_df.sort_values("profit", ascending=False, inplace=True, kind="mergesort")
     stock_df.reset_index(inplace=True)
     stock_df["income"] = stock_df.apply(lambda row: row['price'] * row['profit'] / 100, axis=1)
-    first_best = build_first_best(stock_df)
-    new_list = create_first_candidates(first_best, stock_df)
-    fill_portfolios(new_list, first_best, stock_df)
+    first_best, breaks = build_first_best(stock_df)
+    best_portfolio = check_candidates(first_best, breaks, stock_df)
+    for i in best_portfolio.shares:
+        share = stock_df.loc[i]
+        print(f"{share['name']}    {share.price}  {share.profit}  {share.income}")
+    print(f"Total income: {best_portfolio.total_income}")
+    print(f"Max income: {best_portfolio.max_income}")
+    print(f"Cash: {best_portfolio.cash}")
 
 
 if __name__ == "__main__":
