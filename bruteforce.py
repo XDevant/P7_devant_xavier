@@ -79,4 +79,3 @@ for stock in stock_list:
         if new.total_income > best_portfolio.total_income:
             best_portfolio = deepcopy(new)
 fill_portfolios(brute_list, best_portfolio)
-

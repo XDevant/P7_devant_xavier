@@ -13,7 +13,6 @@ class Portfolio:
         self.shares = []
         self.success = True
 
-
     def buy(self, df, index):
         share = df.loc[index]
         if share.price <= self.cash:
@@ -24,7 +23,6 @@ class Portfolio:
             self.max_income = self.estimate_max_income(df)
         else:
             self.success = False
-
 
     def estimate_max_income(self, df):
         start_id = self.max_id + 1
@@ -48,10 +46,10 @@ class Portfolio:
 
 
 def build_first_best(df):
-    """Bluntly builds a test portofofio by purchasing shares with best profit rate it can buy
-    one after the other in a single itération.
-    Used to quicly eliminate portofolios with a maximum ideal estimated profit lesser than the current best candidate
-    real profit"""
+    """Bluntly builds a test portofofio by purchasing shares with
+    best profit rate it can buy, one after the other in a single itération.
+    Used to quicly eliminate portofolios with a maximum ideal estimated profit
+    lesser than the current best candidate real profit"""
     first_best = Portfolio()
     for i in range(len(df)):
         first_best.buy(df, i)
@@ -89,21 +87,21 @@ def build_portfolios(portfolio, best_portfolio, df):
     return new_list, best_portfolio
 
 
-def fill_portfolios(list, best_portfolio, stock_df):
+def fill_portfolios(list, best_portfolio, df):
     next_list = []
     for portfolio in list:
-        new_list, best_portfolio = build_portfolios(portfolio, best_portfolio, stock_df)
+        new_list, best_portfolio = build_portfolios(portfolio, best_portfolio, df)
         if new_list != []:
             for portfolio in new_list:
                 next_list.append(portfolio)
     if next_list == []:
         for i in best_portfolio.shares:
-            share = stock_df.loc[i]
-            print(f"{share['name']}    {share.price}  {share.profit}  {round(share.income, 2)}")
+            sh = df.loc[i]
+            print(f"{sh['name']}    {sh.price}  {sh.profit}  {round(sh.income, 2)}")
         print(f"Total income: {round(best_portfolio.total_income, 2)}")
         print(f"Total Cost: {round(500 - best_portfolio.cash, 2)}")
     else:
-        fill_portfolios(next_list, best_portfolio, stock_df)
+        fill_portfolios(next_list, best_portfolio, df)
 
 
 def load_stocks(filemane):
@@ -125,16 +123,14 @@ def chrono(func):
 
 @chrono
 def main(argv):
-    stock_df = load_stocks(argv[1])
-    stock_df.sort_values("profit", ascending=False, inplace=True, kind="mergesort")
-    stock_df.reset_index(inplace=True)
-    stock_df["income"] = stock_df.apply(lambda row: row['price'] * row['profit'] / 100, axis=1)
-    first_best = build_first_best(stock_df)
-    new_list, first_best = create_first_candidates(first_best, stock_df)
-    fill_portfolios(new_list, first_best, stock_df)
+    df = load_stocks(argv[1])
+    df.sort_values("profit", ascending=False, inplace=True, kind="mergesort")
+    df.reset_index(inplace=True)
+    df["income"] = df.apply(lambda r: r['price'] * r['profit'] / 100, axis=1)
+    first_best = build_first_best(df)
+    new_list, first_best = create_first_candidates(first_best, df)
+    fill_portfolios(new_list, first_best, df)
 
 
 if __name__ == "__main__":
     main(sys.argv)
-
-

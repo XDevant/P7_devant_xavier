@@ -13,7 +13,6 @@ class Portfolio:
         self.shares = []
         self.success = True
 
-
     def __repr__(self):
         return self.shares.__repr__()
 
@@ -29,7 +28,6 @@ class Portfolio:
             self.success = False
         self.max_id = index
 
-    
     def sell_last(self, df):
         """Sells last bought share if exists but keeps it's index in max_id
         thus enabling backtracking"""
@@ -42,9 +40,9 @@ class Portfolio:
             return True
         return False
 
-
     def estimate_max_income(self, df):
-        """Virtualy fills portfofio with remaining shares, including partial buing of the first too expensive one
+        """Virtualy fills portfofio with remaining shares, including partialy
+        buing of the first too expensive one.
         Used to compare with real income of the current best portfolio"""
         start_id = self.max_id + 1
         start = True
@@ -67,17 +65,18 @@ class Portfolio:
 
 
 def build_first_best(df):
-    """Bluntly builds a test portofofio by purchasing shares with best profit rate it can buy
-    one after the other in a single itération.
-    Used to quicly eliminate portofolios with a maximum ideal estimated profit lesser than the current best candidate
-    real profit
-    Also returns a list of partial portofolios every times we encounter a share too expensive to buy"""
+    """Builds a test portofofio by purchasing shares with best
+    profit rate it can buy, one after the other in a single itération.
+    Used to quicly eliminate portofolios with a maximum ideal
+    estimated profit lesser than the current best candidate's real profit
+    Also returns a list of partial portofolios every times we encounter
+     a share too expensive to buy"""
     first_best = Portfolio()
     breaks = []
     breaking = False
     for i in range(len(df)):
         first_best.buy(df, i)
-        if  first_best.success:
+        if first_best.success:
             breaking = False
         else:
             if not breaking:
@@ -120,20 +119,18 @@ def chrono(func):
 
 @chrono
 def main(argv):
-    stock_df = load_stocks(argv[1])
-    stock_df.sort_values("profit", ascending=False, inplace=True, kind="mergesort")
-    stock_df.reset_index(inplace=True)
-    stock_df["income"] = stock_df.apply(lambda row: row['price'] * row['profit'] / 100, axis=1)
-    first_best, breaks = build_first_best(stock_df)
-    best_portfolio = check_candidates(first_best, breaks, stock_df)
+    df = load_stocks(argv[1])
+    df.sort_values("profit", ascending=False, inplace=True, kind="mergesort")
+    df.reset_index(inplace=True)
+    df["income"] = df.apply(lambda r: r['price'] * r['profit'] / 100, axis=1)
+    first_best, breaks = build_first_best(df)
+    best_portfolio = check_candidates(first_best, breaks, df)
     for i in best_portfolio.shares:
-        share = stock_df.loc[i]
-        print(f"{share['name']}    {share.price}  {share.profit}  {round(share.income, 2)}")
+        sh = df.loc[i]
+        print(f"{sh.name}    {sh.price}  {sh.profit}  {round(sh.income, 2)}")
     print(f"Total income: {round(best_portfolio.total_income, 2)}")
     print(f"Total Cost: {500 - round(best_portfolio.cash, 2)}")
 
 
 if __name__ == "__main__":
     main(sys.argv)
-
-
