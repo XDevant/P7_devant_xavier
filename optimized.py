@@ -127,9 +127,9 @@ def main(argv):
     best_portfolio = check_candidates(first_best, breaks, df)
     for i in best_portfolio.shares:
         sh = df.loc[i]
-        print(f"{sh.name}    {sh.price}  {sh.profit}  {round(sh.income, 2)}")
-    print(f"Total income: {round(best_portfolio.total_income, 2)}")
-    print(f"Total Cost: {500 - round(best_portfolio.cash, 2)}")
+        print(f"{sh.name}:    {sh.price}$  {sh.profit}%  {round(sh.income, 2)}$")
+    print(f"Total income: {round(best_portfolio.total_income, 2)}$")
+    print(f"Total Cost: {500 - round(best_portfolio.cash, 2)}$")
 
 
 if __name__ == "__main__":

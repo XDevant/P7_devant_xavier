@@ -1,6 +1,5 @@
-/dataset1_Python+P7.csv
-/dataset2_Python+P7.csv
 /env
 __pycache__/
 optimized_beta.py
-stocks.pymodels.py
+stocks.py
+models.py
