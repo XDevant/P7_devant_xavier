@@ -15,12 +15,11 @@ The spimplest way to test it is to:
 
         pip install -r requirements.txt
 
-5. Run bruteforce.py (only runs on dataset0):
+5. Run verybruteforce.py (only runs on dataset0):
 
-        python tournamentmanager.py
+        python verybruteforce.py
 
-6. Run brute-optimized or optimized.py followed by the csv file name:
+6. Run bruteforce.py or optimized.py followed by the csv file name:
 
-        python optimized.py dataset1_Python+P7.csv
-
-
+        python optimized.py dataset1.csv
+        python bruteforce.py dataset1.csv
