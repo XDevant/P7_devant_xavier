@@ -56,22 +56,21 @@ def build_first_best(df):
     return first_best
 
 
-def create_first_candidates(best_portfolio, df):
-    first_list = []
-    for i in range(len(df)):
-        new = Portfolio()
-        new.buy(df, i)
-        if new.success and new.max_income > best_portfolio.total_income:
-            first_list.append(new)
-            if new.total_income > best_portfolio.total_income:
-                best_portfolio = deepcopy(new)
-        else:
-            if new.success:
-                break
-    return first_list, best_portfolio
+def smart_append(candidate, portfolios):
+    """Eliminate candidates strictly worst than another 
+    in the list of previous (ie with smaller max_id) candidates"""
+    for portfolio in portfolios:
+        if portfolio.cash >= candidate.cash and portfolio.total_income >= candidate.total_income:
+            return portfolios
+    portfolios.append(candidate)
+    return portfolios
 
 
 def build_portfolios(portfolio, best_portfolio, df):
+    """For a portofolio, returns a list of all possible portofolios with one more share
+    updates best_portfolio
+    breaks if estimated max income is too low to beat best_portfolio since following ids
+    have worst profit rate (sorted df)"""
     new_list = []
     start_id = portfolio.max_id + 1
     for i in range(start_id, len(df)):
@@ -88,12 +87,13 @@ def build_portfolios(portfolio, best_portfolio, df):
 
 
 def fill_portfolios(list, best_portfolio, df):
+    """recursive function that buys every possible share for each possible candidate"""
     next_list = []
     for portfolio in list:
-        new_list, best_portfolio = build_portfolios(portfolio, best_portfolio, df)
-        if new_list != []:
-            for portfolio in new_list:
-                next_list.append(portfolio)
+        list, best_portfolio = build_portfolios(portfolio, best_portfolio, df)
+        if list != []:
+            for portfolio in list:
+                next_list = smart_append(portfolio, next_list)
     if next_list == []:
         for i in best_portfolio.shares:
             sh = df.loc[i]
@@ -105,6 +105,7 @@ def fill_portfolios(list, best_portfolio, df):
 
 
 def load_stocks(filemane):
+    """loads and cleans the csv into a dataframe"""
     df = pd.read_csv(f"./{filemane}", delimiter=",")
     df = df[df["price"] > 0]
     df.drop_duplicates(inplace=True)
@@ -113,11 +114,12 @@ def load_stocks(filemane):
 
 
 def chrono(func):
+    """Wrapper to print the programm runtime."""
     def wrapper(*args, **kwargs):
         start = time.time()
         func(*args, **kwargs)
         end = time.time()
-        print(f"Time: {end - start}")
+        print(f"Time: {round(end - start, 2)}")
     return wrapper
 
 
@@ -128,7 +130,8 @@ def main(argv):
     df.reset_index(inplace=True)
     df["income"] = df.apply(lambda r: r['price'] * r['profit'] / 100, axis=1)
     first_best = build_first_best(df)
-    new_list, first_best = create_first_candidates(first_best, df)
+    new = Portfolio()
+    new_list, first_best = build_portfolios(new, first_best, df)
     fill_portfolios(new_list, first_best, df)
 
 
