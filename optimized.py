@@ -77,7 +77,9 @@ def build_first_best(df):
     for i in range(len(df)):
         first_best.buy(df, i)
         if first_best.success:
-            breaking = False
+            if breaking:
+                breaking = False
+                breaks.append(deepcopy(first_best))
         else:
             if not breaking:
                 breaks.append(deepcopy(first_best))
